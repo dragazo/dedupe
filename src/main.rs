@@ -6,18 +6,19 @@ use clap::Parser;
 use sha2::{Sha512, Digest};
 
 #[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
 struct Args {
     /// Recursively check all files in any specified directory.
     #[clap(short, long)]
     recursive: bool,
 
     /// The files (and/or directories if in recursive mode) to check for duplicates
-    path: Vec<PathBuf>,
+    paths: Vec<PathBuf>,
 }
 
 fn main() {
     let args = Args::parse();
-    let mut paths: VecDeque<PathBuf> = args.path.into_iter().collect();
+    let mut paths: VecDeque<PathBuf> = args.paths.into_iter().collect();
     let mut buckets: BTreeMap<Vec<u8>, BTreeSet<PathBuf>> = Default::default();
     let mut total_files: usize = 0;
 
