@@ -12,6 +12,11 @@ struct Args {
     #[clap(short, long)]
     recursive: bool,
 
+    /// List only the duplicate file paths, leaving a single representative.
+    /// This list could be directly passed into `xargs rm` to delete all duplicates.
+    #[clap(short, long)]
+    simple: bool,
+
     /// The files (and/or directories if in recursive mode) to check for duplicates
     paths: Vec<PathBuf>,
 }
@@ -86,20 +91,27 @@ fn main() {
         }
     }
 
-    let mut dupe_count = 0;
-    for (hash, files) in buckets.iter() {
-        if files.len() == 1 { continue }
-        dupe_count += files.len() - 1;
+    if args.simple {
+        for (_, files) in buckets.iter() {
+            for file in files.iter().fuse().skip(1) {
+                println!("{file:?}");
+            }
+        }
+    } else {
+        let mut dupe_count = 0;
+        for (hash, files) in buckets.iter() {
+            if files.len() == 1 { continue }
+            dupe_count += files.len() - 1;
 
-        for b in hash {
-            print!("{:02x}", b);
+            for b in hash {
+                print!("{b:02x}");
+            }
+            println!(":");
+            for file in files {
+                println!("{file:?}");
+            }
+            println!();
         }
-        println!(":");
-        for file in files {
-            println!("{:?}", file);
-        }
-        println!();
+        println!("found {} duplicates of {} total files", dupe_count, total_files);
     }
-
-    println!("found {} duplicates of {} total files", dupe_count, total_files);
 }
